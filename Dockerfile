@@ -75,7 +75,8 @@ RUN Rscript -e "install.packages('devtools', dependencies=TRUE)" && \
     Rscript -e "devtools::install_github('jeremystan/aargh')"
 
 # Install tensorflow for R
-RUN Rscript -e "install.packages('tensorflow'); tensorflow::install_tensorflow()"
+RUN python3 -m pip install --user virtualenv && \
+    Rscript -e "install.packages('tensorflow'); tensorflow::install_tensorflow()"
 
 # Install Rstudio server
 RUN apt-get install gdebi-core && \
