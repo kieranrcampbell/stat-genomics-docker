@@ -1,54 +1,25 @@
-FROM openjdk:8
+FROM rocker/rstudio:3.5.0
 
 LABEL author="kieranrcampbell"
 
-# Install container-wide requrements gcc, pip, zlib, libssl, make, libncurses, fortran77, g++, R
+# Install tree
+RUN apt-get update && apt-get install -y tree
+
+# Install java
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        g++ \
-        gawk \
-        gcc \
-        gfortran \
-        libboost-all-dev \
-        libbz2-dev \
-        libcurl4-openssl-dev \
-        libdbd-mysql \
-        libgsl0-dev \
-        liblzma-dev \
-        libmariadb-client-lgpl-dev \
-        libncurses5-dev \
-        libpcre3-dev \
-        libreadline-dev \
-        libssl-dev \
-        libxml2-dev \
-        make \
-        python-dev \
-        zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Cairo
-RUN apt-get update && apt-get -y install libcairo2-dev
-
-# Install X-11
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    xauth \
-    xorg \
-    openbox
-
+    apt-get install -y --allow-unauthenticated software-properties-common && \
+    add-apt-repository ppa:webupd8team/java && \
+    apt-get update && \
+    echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | debconf-set-selections && \
+    apt-get install -y --allow-unauthenticated oracle-java8-installer && \
+    apt-get install -y --allow-unauthenticated oracle-java8-set-default
 
 # Install pip
-RUN curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /opt/get-pip.py && \
+RUN apt-get update && \
+    apt-get install -y curl && \
+    curl -fsSL https://bootstrap.pypa.io/get-pip.py -o /opt/get-pip.py && \
     python /opt/get-pip.py && \
     rm /opt/get-pip.py
-
-
-# Install R
-ENV R_VERSION="R-3.5.0"
-RUN curl -fsSL https://cran.r-project.org/src/base/R-3/${R_VERSION}.tar.gz -o /opt/${R_VERSION}.tar.gz && \
-    tar xvzf /opt/${R_VERSION}.tar.gz -C /opt/ && \
-    cd /opt/${R_VERSION};./configure;make;make install && \
-    rm /opt/${R_VERSION}.tar.gz
 
 # Install core R dependencies
 RUN echo "r <- getOption('repos'); r['CRAN'] <- 'https://ftp.acc.umu.se/mirror/CRAN/'; options(repos = r);" > ~/.Rprofile && \
@@ -62,36 +33,38 @@ RUN echo "r <- getOption('repos'); r['CRAN'] <- 'https://ftp.acc.umu.se/mirror/C
     Rscript -e "install.packages('knitr',dependencies=TRUE)" && \
     Rscript -e "install.packages('RMySQL',dependencies=TRUE)"
 
+RUN apt-get update && \
+    apt-get install -y zlib1g-dev
+
+RUN Rscript -e "source('https://bioconductor.org/biocLite.R');biocLite();  biocLite(c('Biobase', 'GenomicRanges'))"
 
 # Install R Bioconductor packages
+RUN echo "source('https://bioconductor.org/biocLite.R')" > /opt/packages.r && \
+    echo "biocLite();" >> /opt/packages.r && \
+    echo 'biocLite(c("Biostrings", "XVector", "SingleCellExperiment", "Rsamtools", "ShortRead", "GenomicFeatures", "GenomicFeatures", "ensembldb", "scater", "biomaRt", "org.Hs.eg.db", "org.Mm.eg.db"))' >> /opt/packages.r && \
+    Rscript /opt/packages.r
+
+# Install R Bioconductor packages (2)
 RUN echo 'source("https://bioconductor.org/biocLite.R")' > /opt/packages.r && \
     echo 'biocLite()' >> /opt/packages.r && \
-    echo 'biocLite(c("SingleCellExperiment", "Rsamtools", "ShortRead", "GenomicRanges", "GenomicFeatures", "ensembldb", "scater", "biomaRt", "org.Hs.eg.db", "org.Mm.eg.db", "scran"))' >> /opt/packages.r && \
-    Rscript /opt/packages.r && \
-    mkdir /usr/local/lib/R/site-library
+    echo 'biocLite(c("scran"))' >> /opt/packages.r && \
+    Rscript /opt/packages.r
+
+RUN apt-get update && \
+    apt-get install -y pkg-config libxml2-dev   
+
+# Install R Bioconductor packages (3)
+RUN echo 'source("https://bioconductor.org/biocLite.R")' > /opt/packages.r && \
+    echo 'biocLite()' >> /opt/packages.r && \
+    echo 'biocLite(c("fgsea", "reactome.db", "GSEABase"))' >> /opt/packages.r && \
+    Rscript /opt/packages.r
 
 # Install some extra R packages
 RUN Rscript -e "install.packages('devtools', dependencies=TRUE)" && \
+    Rscript -e "install.packages('ggalt', dependencies=TRUE)" && \
     Rscript -e "devtools::install_github('jeremystan/aargh')"
 
-# Install tensorflow for R
-RUN python3 -m pip install --user virtualenv && \
-    Rscript -e "install.packages('tensorflow'); tensorflow::install_tensorflow()"
+# Install snakemake
 
-# Install Rstudio server
-RUN apt-get install gdebi-core && \
-    wget https://download2.rstudio.org/rstudio-server-1.1.447-amd64.deb && \
-    gdebi rstudio-server-1.1.447-amd64.deb && \
-    rm rstudio-server-1.1.447-amd64.deb
-
-# Install tree
-RUN apt-get update && apt-get install tree
-
-
-RUN curl -fsSL get.nextflow.io | bash && mv nextflow /usr/local/bin/
-
-# Sort Rprofile crap
-
-# ENV R_PROFILE=/etc/R
-
-RUN echo "options(bitmapType='cairo')" > /usr/local/lib/R/etc/Rprofile.site
+RUN apt-get update && apt install -y python3-pip && \
+    pip3 install snakemake

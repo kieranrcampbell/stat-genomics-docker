@@ -17,7 +17,7 @@ docker build -t statgen .
 To jump into an SSH session call
 
 ```
-docker run --rm -v /krcdata:/krcdata -it -e "TERM=xterm-256color" cellassign1 bash -l
+docker run --rm -v /krcdata:/krcdata -it -e "TERM=xterm-256color" statgen bash -l
 ```
 
 where `krcdata` is a disk mounted that you wish shared with the docker container.
@@ -27,6 +27,11 @@ where `krcdata` is a disk mounted that you wish shared with the docker container
 Call
 
 ```
-docker run -v /krcdata:/krcdata -d -p 8787:8787 rocker/tidyverse
+docker run -v /krcdata:/krcdata -d -p 8787:8787 statgen
 ```
 
+## Permanently mounting data disk 
+
+```
+sudo mount /dev/sdc1 /krcdata
+```
