@@ -43,3 +43,11 @@ If running on azure this needs 8787 created as an open outbound port.
 ```
 sudo mount /dev/sdc1 /krcdata
 ```
+
+## Run Snakemake inside the container
+
+Slightly convoluted - 
+
+```
+docker run -t -v /krcdata/:/krcdata/ statgen snakemake -j 40 -s $(pwd)/Snakefile --directory $(pwd)
+```

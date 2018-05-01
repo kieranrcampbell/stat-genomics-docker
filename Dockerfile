@@ -87,6 +87,13 @@ RUN apt-get update && \
 
 # Install tensorflow for R
 
+# First for root
+RUN sudo apt-get install -y python-pip && \
+    sudo python -m pip install virtualenv && \
+    Rscript -e "install.packages('tensorflow');" && \
+    Rscript -e "tensorflow::install_tensorflow()"
+
+# Then for rstudio
 RUN usermod -aG sudo rstudio && \
     echo "rstudio ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
