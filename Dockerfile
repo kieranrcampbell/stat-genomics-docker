@@ -41,14 +41,10 @@ RUN Rscript -e "source('https://bioconductor.org/biocLite.R');biocLite();  biocL
 # Install R Bioconductor packages
 RUN echo "source('https://bioconductor.org/biocLite.R')" > /opt/packages.r && \
     echo "biocLite();" >> /opt/packages.r && \
-    echo 'biocLite(c("Biostrings", "XVector", "SingleCellExperiment", "Rsamtools", "ShortRead", "GenomicFeatures", "GenomicFeatures", "ensembldb", "scater", "biomaRt", "org.Hs.eg.db", "org.Mm.eg.db"))' >> /opt/packages.r && \
+    echo 'biocLite(c("Biostrings", "XVector", "SingleCellExperiment", "Rsamtools", "ShortRead", "GenomicFeatures", "GenomicFeatures", "ensembldb", "scater", "org.Hs.eg.db", "org.Mm.eg.db"))' >> /opt/packages.r && \
     Rscript /opt/packages.r
 
-# Install R Bioconductor packages (2)
-RUN echo 'source("https://bioconductor.org/biocLite.R")' > /opt/packages.r && \
-    echo 'biocLite()' >> /opt/packages.r && \
-    echo 'biocLite(c("scran"))' >> /opt/packages.r && \
-    Rscript /opt/packages.r
+
 
 RUN apt-get update && \
     apt-get install -y pkg-config libxml2-dev   
@@ -63,9 +59,41 @@ RUN echo 'source("https://bioconductor.org/biocLite.R")' > /opt/packages.r && \
 RUN Rscript -e "install.packages('devtools', dependencies=TRUE)" && \
     Rscript -e "install.packages('ggalt', dependencies=TRUE)" && \
     Rscript -e "devtools::install_github('jeremystan/aargh')" && \
-    Rscript -e "devtools::install_github('diazlab/CONICS/CONICSmat')"
+    Rscript -e "devtools::install_github('diazlab/CONICS/CONICSmat')" && \
+    Rscript -e "devtools::install_github('MarioniLab/DropletUtils')"
+
 
 # Install snakemake
 
 RUN apt-get update && apt install -y python3-pip && \
     pip3 install snakemake
+
+# Install R Bioconductor packages (2)
+RUN echo 'source("https://bioconductor.org/biocLite.R")' > /opt/packages.r && \
+    echo 'biocLite()' >> /opt/packages.r && \
+    echo 'biocLite(c("scran", "biomaRt", "TxDb.Hsapiens.UCSC.hg19.knownGene"))' >> /opt/packages.r && \
+    Rscript /opt/packages.r
+
+# Install R Bioconductor packages (again)
+RUN echo 'source("https://bioconductor.org/biocLite.R")' > /opt/packages.r && \
+    echo 'biocLite()' >> /opt/packages.r && \
+    echo 'biocLite(c("BiocParallel", "goseq", "edgeR", "limma"))' >> /opt/packages.r && \
+    Rscript /opt/packages.r && \
+    Rscript -e "install.packages('ggrepel', dependencies=TRUE)" && \
+    Rscript -e "install.packages('ggbeeswarm', dependencies=TRUE)"
+
+RUN apt-get update && \
+    apt-get install -y emacs
+
+# Install tensorflow for R
+
+RUN usermod -aG sudo rstudio && \
+    echo "rstudio ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+USER rstudio
+RUN sudo apt-get install -y python-pip && \
+    sudo python -m pip install virtualenv && \
+    Rscript -e "install.packages('tensorflow');" && \
+    Rscript -e "tensorflow::install_tensorflow()"
+
+USER root
