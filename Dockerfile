@@ -62,7 +62,8 @@ RUN echo 'source("https://bioconductor.org/biocLite.R")' > /opt/packages.r && \
 # Install some extra R packages
 RUN Rscript -e "install.packages('devtools', dependencies=TRUE)" && \
     Rscript -e "install.packages('ggalt', dependencies=TRUE)" && \
-    Rscript -e "devtools::install_github('jeremystan/aargh')"
+    Rscript -e "devtools::install_github('jeremystan/aargh')" && \
+    Rscript -e "devtools::install_github('diazlab/CONICS/CONICSmat')"
 
 # Install snakemake
 

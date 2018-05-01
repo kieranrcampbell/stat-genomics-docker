@@ -1,5 +1,11 @@
 # stat-genomics-docker
-Docker file for statistical genomics (single-cell focus)
+Docker file for statistical genomics (single-cell focus). This contains:
+
+* R version 3.5
+* Rstudio server
+* Useful bioconductor packages for single-cell analysis
+* Tensorflow for R
+* Snakemake
 
 
 # Workflow
@@ -29,6 +35,8 @@ Call
 ```
 docker run -v /krcdata:/krcdata -d -p 8787:8787 statgen
 ```
+
+If running on azure this needs 8787 created as an open outbound port.
 
 ## Permanently mounting data disk 
 
