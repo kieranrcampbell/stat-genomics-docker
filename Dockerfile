@@ -8,11 +8,10 @@ RUN apt-get update && apt-get install -y tree
 # Install java
 RUN apt-get update && \
     apt-get install -y --allow-unauthenticated software-properties-common && \
-    add-apt-repository ppa:webupd8team/java && \
-    apt-get update && \
+    # add-apt-repository ppa:webupd8team/java && \
+    # apt-get update && \
     echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | debconf-set-selections && \
-    apt-get install -y --allow-unauthenticated oracle-java8-installer && \
-    apt-get install -y --allow-unauthenticated oracle-java8-set-default
+    apt-get install -y --allow-unauthenticated default-jdk
 
 # Install pip
 RUN apt-get update && \
@@ -59,7 +58,6 @@ RUN echo 'source("https://bioconductor.org/biocLite.R")' > /opt/packages.r && \
 RUN Rscript -e "install.packages('devtools', dependencies=TRUE)" && \
     Rscript -e "install.packages('ggalt', dependencies=TRUE)" && \
     Rscript -e "devtools::install_github('jeremystan/aargh')" && \
-    Rscript -e "devtools::install_github('diazlab/CONICS/CONICSmat')" && \
     Rscript -e "devtools::install_github('MarioniLab/DropletUtils')"
 
 
@@ -80,7 +78,8 @@ RUN echo 'source("https://bioconductor.org/biocLite.R")' > /opt/packages.r && \
     echo 'biocLite(c("BiocParallel", "goseq", "edgeR", "limma"))' >> /opt/packages.r && \
     Rscript /opt/packages.r && \
     Rscript -e "install.packages('ggrepel', dependencies=TRUE)" && \
-    Rscript -e "install.packages('ggbeeswarm', dependencies=TRUE)"
+    Rscript -e "install.packages('ggbeeswarm', dependencies=TRUE)" && \
+    Rscript -e "install.packages('ggsci', dependencies=TRUE)" 
 
 RUN apt-get update && \
     apt-get install -y emacs
@@ -104,3 +103,11 @@ RUN sudo apt-get install -y python-pip && \
     Rscript -e "tensorflow::install_tensorflow()"
 
 USER root
+
+# And install ggalt
+
+RUN apt-get update && \
+    apt-get install -y libgdal-dev libproj-dev && \
+    Rscript -e "install.packages('ggalt', dependencies=TRUE)" && \
+    Rscript -e "install.packages('foreach', dependencies=TRUE)" && \
+    Rscript -e "install.packages('doParallel', dependencies=TRUE)" && \
