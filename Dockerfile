@@ -110,4 +110,9 @@ RUN apt-get update && \
     apt-get install -y libgdal-dev libproj-dev && \
     Rscript -e "install.packages('ggalt', dependencies=TRUE)" && \
     Rscript -e "install.packages('foreach', dependencies=TRUE)" && \
-    Rscript -e "install.packages('doParallel', dependencies=TRUE)" && \
+    Rscript -e "install.packages('doParallel', dependencies=TRUE)"
+
+RUN Rscript -e "install.packages('tidyverse', dependencies=TRUE)"
+
+RUN pip3 install pandas && \
+    pip3 install networkx
