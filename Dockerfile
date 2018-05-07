@@ -112,7 +112,12 @@ RUN apt-get update && \
     Rscript -e "install.packages('foreach', dependencies=TRUE)" && \
     Rscript -e "install.packages('doParallel', dependencies=TRUE)"
 
-RUN Rscript -e "install.packages('tidyverse', dependencies=TRUE)"
+RUN Rscript -e "install.packages('tidyverse', dependencies=TRUE)" && \
+    Rscript -e "install.packages('pROC', dependencies=TRUE)" && \
+     Rscript -e "install.packages('Rtsne', dependencies=TRUE)"
 
 RUN pip3 install pandas && \
     pip3 install networkx
+
+RUN wget -qO- https://get.nextflow.io | bash && \
+    mv nextflow /usr/bin/
