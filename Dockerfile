@@ -123,4 +123,4 @@ RUN wget -qO- https://get.nextflow.io | bash && \
     mv nextflow /usr/bin/
 
 # Gotta love docker
-RUN apt-get update && apt-get install openssh-client
+RUN apt-get update && apt-get install -y openssh-client
