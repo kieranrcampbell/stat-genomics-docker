@@ -75,7 +75,7 @@ RUN echo 'source("https://bioconductor.org/biocLite.R")' > /opt/packages.r && \
 # Install R Bioconductor packages (again)
 RUN echo 'source("https://bioconductor.org/biocLite.R")' > /opt/packages.r && \
     echo 'biocLite()' >> /opt/packages.r && \
-    echo 'biocLite(c("BiocParallel", "goseq", "edgeR", "limma", "BiocStyle", "BiocCheck", "SC3", "iSEE"))' >> /opt/packages.r && \
+    echo 'biocLite(c("BiocParallel", "goseq", "edgeR", "limma", "BiocStyle", "BiocCheck", "SC3", "iSEE", "TxDb.Mmusculus.UCSC.mm9.knownGene"))' >> /opt/packages.r && \
     Rscript /opt/packages.r && \
     Rscript -e "install.packages('ggrepel', dependencies=TRUE)" && \
     Rscript -e "install.packages('ggbeeswarm', dependencies=TRUE)" && \
