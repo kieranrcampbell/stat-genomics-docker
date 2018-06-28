@@ -125,3 +125,10 @@ RUN wget -qO- https://get.nextflow.io | bash && \
 
 # Gotta love docker
 RUN apt-get update && apt-get install -y openssh-client
+
+# More bioconductor
+RUN echo 'source("https://bioconductor.org/biocLite.R")' > /opt/packages.r && \
+    echo 'biocLite()' >> /opt/packages.r && \
+    echo 'biocLite(c("TxDb.Hsapiens.UCSC.hg38.knownGene"))' >> /opt/packages.r && \
+    Rscript /opt/packages.r
+
