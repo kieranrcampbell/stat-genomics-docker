@@ -132,3 +132,7 @@ RUN echo 'source("https://bioconductor.org/biocLite.R")' > /opt/packages.r && \
     echo 'biocLite(c("TxDb.Hsapiens.UCSC.hg38.knownGene"))' >> /opt/packages.r && \
     Rscript /opt/packages.r
 
+# Install jags
+RUN apt-get update && apt-get install -y jags &&
+    Rscript -e "devtools::install_github('JEFworks/HoneyBADGER')"
+
