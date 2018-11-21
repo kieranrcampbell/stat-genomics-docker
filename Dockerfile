@@ -1,4 +1,4 @@
-FROM rocker/rstudio:3.5.0
+FROM rocker/rstudio:latest
 
 LABEL author="kieranrcampbell"
 
@@ -20,69 +20,51 @@ RUN apt-get update && \
     python /opt/get-pip.py && \
     rm /opt/get-pip.py
 
-# Install core R dependencies
-RUN echo "r <- getOption('repos'); r['CRAN'] <- 'https://ftp.acc.umu.se/mirror/CRAN/'; options(repos = r);" > ~/.Rprofile && \
-    Rscript -e "install.packages('tidyverse',dependencies=TRUE)" && \
-    Rscript -e "install.packages('cowplot',dependencies=TRUE)" && \
-    Rscript -e "install.packages('utils',dependencies=TRUE)" && \
-    Rscript -e "install.packages('stringr',dependencies=TRUE)" && \
-    Rscript -e "install.packages('markdown',dependencies=TRUE)" && \
-    Rscript -e "install.packages('evaluate',dependencies=TRUE)" && \
-    Rscript -e "install.packages('ggplot2',dependencies=TRUE)" && \
-    Rscript -e "install.packages('knitr',dependencies=TRUE)" && \
-    Rscript -e "install.packages('RMySQL',dependencies=TRUE)"
 
 RUN apt-get update && \
-    apt-get install -y zlib1g-dev
-
-RUN Rscript -e "source('https://bioconductor.org/biocLite.R');biocLite();  biocLite(c('Biobase', 'GenomicRanges'))"
-
-# Install R Bioconductor packages
-RUN echo "source('https://bioconductor.org/biocLite.R')" > /opt/packages.r && \
-    echo "biocLite();" >> /opt/packages.r && \
-    echo 'biocLite(c("Biostrings", "XVector", "SingleCellExperiment", "Rsamtools", "ShortRead", "GenomicFeatures", "GenomicFeatures", "ensembldb", "scater", "org.Hs.eg.db", "org.Mm.eg.db"))' >> /opt/packages.r && \
-    Rscript /opt/packages.r
-
-
-
-RUN apt-get update && \
-    apt-get install -y pkg-config libxml2-dev   
-
-# Install R Bioconductor packages (3)
-RUN echo 'source("https://bioconductor.org/biocLite.R")' > /opt/packages.r && \
-    echo 'biocLite()' >> /opt/packages.r && \
-    echo 'biocLite(c("fgsea", "reactome.db", "GSEABase"))' >> /opt/packages.r && \
-    Rscript /opt/packages.r
-
-# Install some extra R packages
-RUN Rscript -e "install.packages('devtools', dependencies=TRUE)" && \
-    Rscript -e "install.packages('ggalt', dependencies=TRUE)" && \
-    Rscript -e "devtools::install_github('jeremystan/aargh')" && \
-    Rscript -e "devtools::install_github('MarioniLab/DropletUtils')"
-
+    apt-get install -y zlib1g-dev && \
+    apt-get install -y pkg-config libxml2-dev && \
+    apt-get install -y emacs && \
+    apt-get install -y openssh-client && \
+    apt-get install -y jags
 
 # Install snakemake
-
 RUN apt-get update && apt install -y python3-pip && \
     pip3 install snakemake
 
-# Install R Bioconductor packages (2)
-RUN echo 'source("https://bioconductor.org/biocLite.R")' > /opt/packages.r && \
-    echo 'biocLite()' >> /opt/packages.r && \
-    echo 'biocLite(c("scran", "biomaRt", "TxDb.Hsapiens.UCSC.hg19.knownGene"))' >> /opt/packages.r && \
-    Rscript /opt/packages.r
+RUN pip3 install pandas && \
+    pip3 install networkx
 
-# Install R Bioconductor packages (again)
-RUN echo 'source("https://bioconductor.org/biocLite.R")' > /opt/packages.r && \
-    echo 'biocLite()' >> /opt/packages.r && \
-    echo 'biocLite(c("BiocParallel", "goseq", "edgeR", "limma", "BiocStyle", "BiocCheck", "SC3", "iSEE", "TxDb.Mmusculus.UCSC.mm9.knownGene", "CNTools"))' >> /opt/packages.r && \
-    Rscript /opt/packages.r && \
-    Rscript -e "install.packages('ggrepel', dependencies=TRUE)" && \
-    Rscript -e "install.packages('ggbeeswarm', dependencies=TRUE)" && \
-    Rscript -e "install.packages('ggsci', dependencies=TRUE)" 
+# Install nextflow
+RUN wget -qO- https://get.nextflow.io | bash && \
+    mv nextflow /usr/bin/
 
-RUN apt-get update && \
-    apt-get install -y emacs
+
+# Install miniconda to /miniconda
+RUN curl -LO http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh
+RUN bash Miniconda-latest-Linux-x86_64.sh -p /miniconda -b
+RUN rm Miniconda-latest-Linux-x86_64.sh
+ENV PATH=/miniconda/bin:${PATH}
+RUN conda update -y conda
+
+# Create tensorflow environment?
+RUN conda create -n py36 python=3.6 anaconda
+
+# Create environment
+RUN conda create -n py27 python=2.7 anaconda
+
+# Install packages
+RUN /bin/bash -c "source /miniconda/bin/activate py27" && \
+    conda install -n py27 -y \
+    numpy \
+    pandas \
+    scipy && \
+    conda install -n py27 -y -c bioconda pysam
+
+# Install samtools
+RUN apt-get install -y samtools
+
+RUN /bin/bash -c "source /miniconda/bin/activate py36"
 
 # Install tensorflow for R
 
@@ -97,42 +79,26 @@ RUN usermod -aG sudo rstudio && \
     echo "rstudio ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 USER rstudio
-RUN sudo apt-get install -y python-pip && \
-    sudo python -m pip install virtualenv && \
-    Rscript -e "install.packages('tensorflow');" && \
-    Rscript -e "tensorflow::install_tensorflow()"
+
+RUN /bin/bash -c "source /miniconda/bin/activate py36"
+
+RUN Rscript -e "install.packages('tensorflow'); tensorflow::install_tensorflow()"
+
+RUN sudo chown -R "rstudio" /home/rstudio/
+
 
 USER root
 
-# And install ggalt
 
-RUN apt-get update && \
-    apt-get install -y libgdal-dev libproj-dev && \
-    Rscript -e "install.packages('ggalt', dependencies=TRUE)" && \
-    Rscript -e "install.packages('foreach', dependencies=TRUE)" && \
-    Rscript -e "install.packages('doParallel', dependencies=TRUE)"
+# Install CRAN packages
+ADD install_cran.R /tmp/
+RUN Rscript /tmp/install_cran.R
 
-RUN Rscript -e "install.packages('tidyverse', dependencies=TRUE)" && \
-    Rscript -e "install.packages('pROC', dependencies=TRUE)" && \
-     Rscript -e "install.packages('Rtsne', dependencies=TRUE)" && \
-     Rscript -e "install.packages('TCGA2STAT', dependencies=TRUE)"
+# Install bioc packages
+ADD install_bioc.R /tmp/
+RUN Rscript /tmp/install_bioc.R
 
-RUN pip3 install pandas && \
-    pip3 install networkx
-
-RUN wget -qO- https://get.nextflow.io | bash && \
-    mv nextflow /usr/bin/
-
-# Gotta love docker
-RUN apt-get update && apt-get install -y openssh-client
-
-# More bioconductor
-RUN echo 'source("https://bioconductor.org/biocLite.R")' > /opt/packages.r && \
-    echo 'biocLite()' >> /opt/packages.r && \
-    echo 'biocLite(c("TxDb.Hsapiens.UCSC.hg38.knownGene"))' >> /opt/packages.r && \
-    Rscript /opt/packages.r
-
-# Install jags
-RUN apt-get update && apt-get install -y jags &&
-    Rscript -e "devtools::install_github('JEFworks/HoneyBADGER')"
+# Install github packages
+ADD install_github.R /tmp/
+RUN Rscript /tmp/install_github.R
 
