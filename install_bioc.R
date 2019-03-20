@@ -25,7 +25,9 @@ bioc_pkgs <- c(
   'iSEE', 
   'TxDb.Mmusculus.UCSC.mm9.knownGene', 
   'CNTools',
-  'DropletUtils'
+  'DropletUtils',
+  'lpsymphony',
+  'IHW'
 )
 
 

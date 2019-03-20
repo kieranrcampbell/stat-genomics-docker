@@ -22,7 +22,10 @@ cran_pkgs <- c(
   'TCGA2STAT',
   'rbenchmark',
   'devtools',
-  'remotes'
+  'remotes',
+  'umap',
+  'rstan',
+  'here'
 )
 
 ip <- installed.packages()

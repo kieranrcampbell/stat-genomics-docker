@@ -41,10 +41,10 @@ RUN wget -qO- https://get.nextflow.io | bash && \
 
 
 # Install miniconda to /miniconda
-RUN curl -LO http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh
-RUN bash Miniconda-latest-Linux-x86_64.sh -p /miniconda -b
-RUN rm Miniconda-latest-Linux-x86_64.sh
-ENV PATH=/miniconda/bin:${PATH}
+RUN curl -LO https://repo.anaconda.com/archive/Anaconda3-2018.12-Linux-x86_64.sh
+RUN bash Anaconda3-2018.12-Linux-x86_64.sh -p /anaconda -b
+RUN rm Anaconda3-2018.12-Linux-x86_64.sh
+ENV PATH=/anaconda/bin:${PATH}
 RUN conda update -y conda
 
 # Create tensorflow environment?
@@ -54,7 +54,7 @@ RUN conda create -n py36 python=3.6 anaconda
 RUN conda create -n py27 python=2.7 anaconda
 
 # Install packages
-RUN /bin/bash -c "source /miniconda/bin/activate py27" && \
+RUN /bin/bash -c "source /anaconda/bin/activate py27" && \
     conda install -n py27 -y \
     numpy \
     pandas \
@@ -64,7 +64,7 @@ RUN /bin/bash -c "source /miniconda/bin/activate py27" && \
 # Install samtools
 RUN apt-get install -y samtools
 
-RUN /bin/bash -c "source /miniconda/bin/activate py36"
+RUN /bin/bash -c "source /anaconda/bin/activate py36"
 
 # Install tensorflow for R
 
@@ -72,7 +72,7 @@ RUN /bin/bash -c "source /miniconda/bin/activate py36"
 RUN sudo apt-get install -y python-pip && \
     sudo python -m pip install virtualenv && \
     Rscript -e "install.packages('tensorflow');" && \
-    Rscript -e "tensorflow::install_tensorflow()"
+    Rscript -e "tensorflow::install_tensorflow(extra_packages = 'tensorflow-probability')"
 
 # Then for rstudio
 RUN usermod -aG sudo rstudio && \
@@ -80,9 +80,9 @@ RUN usermod -aG sudo rstudio && \
 
 USER rstudio
 
-RUN /bin/bash -c "source /miniconda/bin/activate py36"
+RUN /bin/bash -c "source /anaconda/bin/activate py36"
 
-RUN Rscript -e "install.packages('tensorflow'); tensorflow::install_tensorflow()"
+RUN Rscript -e "install.packages('tensorflow'); tensorflow::install_tensorflow(extra_packages = 'tensorflow-probability')"
 
 RUN sudo chown -R "rstudio" /home/rstudio/
 
@@ -102,3 +102,37 @@ RUN Rscript /tmp/install_bioc.R
 ADD install_github.R /tmp/
 RUN Rscript /tmp/install_github.R
 
+# Install packages
+RUN /bin/bash -c "source /anaconda/bin/activate py36" && \
+    conda install -n py36 -y \
+    numpy \
+    pandas \
+    scipy && \
+    conda install -n py36 -y -c bioconda pysam && \
+    conda install -c conda-forge jupyterlab
+
+USER rstudio
+
+ENV PATH $PATH:/anaconda/bin/
+
+USER root
+
+EXPOSE 8888
+
+# Install Tensorflow again
+
+USER rstudio
+
+RUN /bin/bash -c "source /anaconda/bin/activate py36"
+
+RUN Rscript -e "install.packages('tensorflow'); tensorflow::install_tensorflow(extra_packages = 'tensorflow-probability', version = '1.12.0')"
+
+RUN sudo chown -R "rstudio" /home/rstudio/
+
+
+USER root
+
+RUN sudo apt-get install -y python-pip && \
+    sudo python -m pip install virtualenv && \
+    Rscript -e "install.packages('tensorflow');" && \
+    Rscript -e "tensorflow::install_tensorflow(extra_packages = 'tensorflow-probability', version='1.12.0')"
